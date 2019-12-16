@@ -299,7 +299,7 @@ class Meshlab(base.BaseRemesher):
             if os.name == "nt":
                 newdata = newdata.replace("FILTERNAME", "Simplification: Quadric Edge Collapse Decimation")
             else:
-                newdata = newdata.replace("FILTERNAME", "Quadric Edge Collapse Decimation")
+                newdata = newdata.replace("FILTERNAME", "Simplification: Quadric Edge Collapse Decimation")
             with open(new_script, 'w') as outfile:
                 outfile.write(newdata)
         #remesh
