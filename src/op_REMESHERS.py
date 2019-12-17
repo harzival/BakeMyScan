@@ -237,9 +237,6 @@ class Mmgs(base.BaseRemesher):
     def status(self, context):
         pass
 
-filtername = "Simplification: Quadric Edge Collapse Decimation"
-filtername_unchanged = True
-
 class Meshlab(base.BaseRemesher):
     bl_idname = "bakemyscan.remesh_meshlab"
     bl_label  = "Meshlab"
@@ -299,7 +296,7 @@ class Meshlab(base.BaseRemesher):
             newdata  = newdata.replace("OPTIM", str(not self.existing).lower())
             newdata  = newdata.replace("PLANAR", str(self.planar).lower())
             newdata  = newdata.replace("CLEAN", str(self.post).lower())
-            newdata  = newdata.replace("FILTERNAME", filtername)
+            newdata  = newdata.replace("FILTERNAME", base.filtername)
             with open(new_script, 'w') as outfile:
                 outfile.write(newdata)
         #remesh
@@ -313,9 +310,9 @@ class Meshlab(base.BaseRemesher):
         try:
             bpy.ops.import_scene.obj(filepath=os.path.join(self.tmp.name, "tmp.o.obj"))
         except:
-            if filtername_unchanged:
-                filtername = "Quadric Edge Collapse Decimation"
-                filtername_unchanged = False
+            if base.filtername_unchanged:
+                base.filtername = "Quadric Edge Collapse Decimation"
+                base.filtername_unchanged = False
                 self.remeshtime = time.time()
                 self.remesh(context)
                 self.remeshtime = time.time() - self.remeshtime

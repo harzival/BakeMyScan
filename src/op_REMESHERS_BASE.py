@@ -6,6 +6,9 @@ import time
 from mathutils import Vector
 import numpy as np
 
+filtername = "Simplification: Quadric Edge Collapse Decimation"
+filtername_unchanged = True
+
 class BaseRemesher(bpy.types.Operator):
     bl_idname = "bakemyscan.empty_remesher"
     bl_label  = "Empty remersher structure"
