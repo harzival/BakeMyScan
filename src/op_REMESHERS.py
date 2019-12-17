@@ -237,6 +237,9 @@ class Mmgs(base.BaseRemesher):
     def status(self, context):
         pass
 
+filtername = "Simplification: Quadric Edge Collapse Decimation"
+filtername_unchanged = True
+
 class Meshlab(base.BaseRemesher):
     bl_idname = "bakemyscan.remesh_meshlab"
     bl_label  = "Meshlab"
@@ -251,9 +254,6 @@ class Meshlab(base.BaseRemesher):
     existing = bpy.props.BoolProperty( name="existing", description="Use existing vertices", default=False)
     planar   = bpy.props.BoolProperty( name="planar", description="Planar simplification", default=False)
     post     = bpy.props.BoolProperty( name="post", description="Post-process (isolated, duplicates...)", default=True)
-
-    filtername = "Simplification: Quadric Edge Collapse Decimation"
-    filtername_unchanged = True
 
     def check(self, context):
         return True
@@ -313,9 +313,9 @@ class Meshlab(base.BaseRemesher):
         try:
             bpy.ops.import_scene.obj(filepath=os.path.join(self.tmp.name, "tmp.o.obj"))
         except:
-            if self.filtername_unchanged:
-                self.filtername = "Quadric Edge Collapse Decimation"
-                self.filtername_unchanged = False
+            if filtername_unchanged:
+                filtername = "Quadric Edge Collapse Decimation"
+                filtername_unchanged = False
                 self.remeshtime = time.time()
                 self.remesh(context)
                 self.remeshtime = time.time() - self.remeshtime
