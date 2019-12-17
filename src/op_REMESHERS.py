@@ -252,6 +252,9 @@ class Meshlab(base.BaseRemesher):
     planar   = bpy.props.BoolProperty( name="planar", description="Planar simplification", default=False)
     post     = bpy.props.BoolProperty( name="post", description="Post-process (isolated, duplicates...)", default=True)
 
+    filtername = "Simplification: Quadric Edge Collapse Decimation"
+    filtername_unchanged = True
+
     def check(self, context):
         return True
     def draw(self, context):
@@ -296,10 +299,7 @@ class Meshlab(base.BaseRemesher):
             newdata  = newdata.replace("OPTIM", str(not self.existing).lower())
             newdata  = newdata.replace("PLANAR", str(self.planar).lower())
             newdata  = newdata.replace("CLEAN", str(self.post).lower())
-            if os.name == "nt":
-                newdata = newdata.replace("FILTERNAME", "Simplification: Quadric Edge Collapse Decimation")
-            else:
-                newdata = newdata.replace("FILTERNAME", "Simplification: Quadric Edge Collapse Decimation")
+            newdata  = newdata.replace("FILTERNAME", filtername)
             with open(new_script, 'w') as outfile:
                 outfile.write(newdata)
         #remesh
@@ -310,8 +310,25 @@ class Meshlab(base.BaseRemesher):
             script_file = new_script,
         )
     def reimport(self, context):
-        bpy.ops.import_scene.obj(filepath=os.path.join(self.tmp.name, "tmp.o.obj"))
-
+        try:
+            bpy.ops.import_scene.obj(filepath=os.path.join(self.tmp.name, "tmp.o.obj"))
+        except:
+            if self.filtername_unchanged:
+                self.filtername = "Quadric Edge Collapse Decimation"
+                self.filtername_unchanged = False
+                self.remeshtime = time.time()
+                self.remesh(context)
+                self.remeshtime = time.time() - self.remeshtime
+                #Check the output
+                if self.executable is not None:
+                    self.status(context)
+                try:
+                    bpy.ops.import_scene.obj(filepath=os.path.join(self.tmp.name, "tmp.o.obj"))
+                except:
+                    raise Exception
+            else:
+                raise Exception
+                    
 # Custom methods
 
 class Basic(base.BaseRemesher):
