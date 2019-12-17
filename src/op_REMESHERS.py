@@ -252,6 +252,9 @@ class Meshlab(base.BaseRemesher):
     planar   = bpy.props.BoolProperty( name="planar", description="Planar simplification", default=False)
     post     = bpy.props.BoolProperty( name="post", description="Post-process (isolated, duplicates...)", default=True)
 
+    filtername = "Simplification: Quadric Edge Collapse Decimation"
+    filtername_unchanged = True
+    
     def check(self, context):
         return True
     def draw(self, context):
@@ -296,7 +299,7 @@ class Meshlab(base.BaseRemesher):
             newdata  = newdata.replace("OPTIM", str(not self.existing).lower())
             newdata  = newdata.replace("PLANAR", str(self.planar).lower())
             newdata  = newdata.replace("CLEAN", str(self.post).lower())
-            newdata  = newdata.replace("FILTERNAME", base.filtername)
+            newdata  = newdata.replace("FILTERNAME", self.filtername)
             with open(new_script, 'w') as outfile:
                 outfile.write(newdata)
         #remesh
@@ -310,9 +313,10 @@ class Meshlab(base.BaseRemesher):
         try:
             bpy.ops.import_scene.obj(filepath=os.path.join(self.tmp.name, "tmp.o.obj"))
         except:
-            if base.filtername_unchanged:
-                base.filtername = "Quadric Edge Collapse Decimation"
-                base.filtername_unchanged = False
+            if self.filtername_unchanged:
+                print("First filtername didnt work, trying the other...")
+                self.filtername = "Quadric Edge Collapse Decimation"
+                self.filtername_unchanged = False
                 self.remeshtime = time.time()
                 self.remesh(context)
                 self.remeshtime = time.time() - self.remeshtime
@@ -320,10 +324,13 @@ class Meshlab(base.BaseRemesher):
                 if self.executable is not None:
                     self.status(context)
                 try:
+                    print("trying to remesh again")
                     bpy.ops.import_scene.obj(filepath=os.path.join(self.tmp.name, "tmp.o.obj"))
                 except:
+                    print("remeshing with the alternate name didnt work")
                     raise Exception
             else:
+                print("already tried changing the filter name.. it didnt work.. something else is wrong.")
                 raise Exception
                     
 # Custom methods
