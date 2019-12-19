@@ -251,9 +251,6 @@ class Meshlab(base.BaseRemesher):
     existing = bpy.props.BoolProperty( name="existing", description="Use existing vertices", default=False)
     planar   = bpy.props.BoolProperty( name="planar", description="Planar simplification", default=False)
     post     = bpy.props.BoolProperty( name="post", description="Post-process (isolated, duplicates...)", default=True)
-
-    filtername = "Simplification: Quadric Edge Collapse Decimation"
-    filtername_unchanged = True
     
     def check(self, context):
         return True
@@ -275,7 +272,6 @@ class Meshlab(base.BaseRemesher):
             if self.boundaries:
                 box.prop(self, "weight", text="Boundary preserving weight")
 
-
     #Overriden methods
     def setexe(self, context):
         self.executable = bpy.types.Scene.executables["meshlabserver"]
@@ -285,6 +281,36 @@ class Meshlab(base.BaseRemesher):
             use_selection = True
         )
     def remesh(self, context):
+        #Check if the filtername to be used is actually going to work, tested by trying meshlab with dummy data.
+        if not bpy.types.Scene.filtername_tested:
+            test_obj_path = os.path.join(os.path.dirname(__file__), os.path.pardir, "scripts_meshlab", "test_cube.obj")
+            def filtername_works(test_script_path):
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    output_obj_path = os.path.join(tmpdir, "test_output.obj")
+                    results  = fn_soft.meshlabserver(
+                        executable  = self.executable,
+                        input_mesh  = test_obj_path,
+                        output_mesh = output_obj_path,
+                        script_file = test_script_path
+                    )
+                    if os.path.exists(output_obj_path):
+                        return True
+            test1_script_path = os.path.join(os.path.dirname(__file__), os.path.pardir, "scripts_meshlab", "filtername_test1.mlx")
+            test2_script_path = os.path.join(os.path.dirname(__file__), os.path.pardir, "scripts_meshlab", "filtername_test2.mlx")
+            print("Testing meshlab's specified filter name for compatibility")
+            if filtername_works(test1_script_path):
+                print("Existing filter name works!")
+                bpy.types.Scene.filtername_tested = True
+            else:
+                if filtername_works(test2_script_path):
+                    bpy.types.Scene.filtername = "Quadric Edge Collapse Decimation"
+                    print("Success with changed meshlab filter name (added 'Simplification: ' prefix)")
+                    bpy.types.Scene.filtername_tested = True
+                else:
+                    print("Both filter names failed, something else is wrong with meshlabserver (check path?)")
+                    bpy.types.Scene.filtername_tested = False
+
+
         #Create a temporary meshlab script with custom variables
         original_script = os.path.join(os.path.dirname(__file__), os.path.pardir, "scripts_meshlab", "quadricedgecollapse.mlx")
         new_script      = os.path.join(self.tmp.name, "tmp.mlx")
@@ -299,7 +325,7 @@ class Meshlab(base.BaseRemesher):
             newdata  = newdata.replace("OPTIM", str(not self.existing).lower())
             newdata  = newdata.replace("PLANAR", str(self.planar).lower())
             newdata  = newdata.replace("CLEAN", str(self.post).lower())
-            newdata  = newdata.replace("FILTERNAME", self.filtername)
+            newdata  = newdata.replace("FILTERNAME", bpy.types.Scene.filtername)
             with open(new_script, 'w') as outfile:
                 outfile.write(newdata)
         #remesh
@@ -310,28 +336,28 @@ class Meshlab(base.BaseRemesher):
             script_file = new_script,
         )
     def reimport(self, context):
-        try:
-            bpy.ops.import_scene.obj(filepath=os.path.join(self.tmp.name, "tmp.o.obj"))
-        except:
-            if self.filtername_unchanged:
-                print("First filtername didnt work, trying the other...")
-                self.filtername = "Quadric Edge Collapse Decimation"
-                self.filtername_unchanged = False
-                self.remeshtime = time.time()
-                self.remesh(context)
-                self.remeshtime = time.time() - self.remeshtime
-                #Check the output
-                if self.executable is not None:
-                    self.status(context)
-                try:
-                    print("trying to remesh again")
-                    bpy.ops.import_scene.obj(filepath=os.path.join(self.tmp.name, "tmp.o.obj"))
-                except:
-                    print("remeshing with the alternate name didnt work")
-                    raise Exception
-            else:
-                print("already tried changing the filter name.. it didnt work.. something else is wrong.")
-                raise Exception
+        bpy.ops.import_scene.obj(filepath=os.path.join(self.tmp.name, "tmp.o.obj"))
+        
+        # except:
+        #     if self.filtername_unchanged:
+        #         print("First filtername didnt work, trying the other...")
+        #         self.filtername = "Quadric Edge Collapse Decimation"
+        #         self.filtername_unchanged = False
+        #         self.remeshtime = time.time()
+        #         self.remesh(context)
+        #         self.remeshtime = time.time() - self.remeshtime
+        #         #Check the output
+        #         if self.executable is not None:
+        #             self.status(context)
+        #         try:
+        #             print("trying to remesh again")
+        #             bpy.ops.import_scene.obj(filepath=os.path.join(self.tmp.name, "tmp.o.obj"))
+        #         except:
+        #             print("remeshing with the alternate name didnt work")
+        #             raise Exception
+        #     else:
+        #         print("already tried changing the filter name.. it didnt work.. something else is wrong.")
+        #         raise Exception
                     
 # Custom methods
 

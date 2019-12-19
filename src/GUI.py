@@ -81,6 +81,10 @@ class BakeMyScanProperties(bpy.types.PropertyGroup):
     #PBR library
     texturepath =  bpy.props.StringProperty(description="Filepath used for importing the file",subtype='DIR_PATH',update=create_PBR_library)
 
+    #Meshlab compatibility hack's persistanace properties
+    filtername = bpy.props.StringProperty(description="Meshlab Filtername")
+    filtername_tested = bpy.props.BoolProperty(description="Has meshlab's script filtername been tested")
+
 class ScanPanel(BakeMyScanPanel):
     """A panel for the scanning methods"""
     bl_label       = "Structure from Motion"
@@ -332,6 +336,8 @@ def register():
     bpy.utils.register_class(BakeMyScanProperties)
     bpy.types.Scene.bakemyscan_properties = bpy.props.PointerProperty(type=BakeMyScanProperties)
     bpy.types.Scene.imagesdirectory = ""
+    bpy.types.Scene.filtername = "Simplification: Quadric Edge Collapse Decimation"
+    bpy.types.Scene.filtername_tested = False
     #Panels
     bpy.utils.register_class(ScanPanel)
     bpy.utils.register_class(MaterialPanel)
@@ -354,6 +360,8 @@ def unregister():
     bpy.utils.unregister_class(BakeMyScanProperties)
     del bpy.types.Scene.bakemyscan_properties
     del bpy.types.Scene.imagesdirectory
+    del bpy.types.Scene.filtername
+    del bpy.types.Scene.filtername_tested
     #Panels
     bpy.utils.unregister_class(ScanPanel)
     bpy.utils.unregister_class(MaterialPanel)

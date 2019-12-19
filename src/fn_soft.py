@@ -69,6 +69,7 @@ def meshlabserver(
     cmd += "-o %s" % output_mesh
     if log_file is not None:
         cmd += "-l %s" % log_file
+    print(cmd)
     return run(cmd)
 
 def instant_meshes_cmd(
